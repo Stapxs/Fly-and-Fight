@@ -72,6 +72,15 @@ class Flight:
                     # 发射子弹
                     if event.key == K_SPACE:
                         self.__fire()
+                    # 重开
+                    if event.key == K_r:
+                        # 重置主机位置
+                        self.x = globalvar.width / 2 - self.width / 2
+                        self.y = globalvar.height - self.height * 2
+                        # 开始生成
+                        globalvar.body_max = globalvar.body_max_bak
+                        # 切换 UI
+                        globalvar.ui = 'game'
                     # 退出
                     if event.key == K_q or event.key == K_ESCAPE:
                         globalvar.done = True
@@ -107,7 +116,7 @@ class Flight:
         if bullet is not None:
             self.bullet_list.append(bullet)
 
-        if globalvar.debug:
+        if globalvar.debug and self.type == globalvar.FlightType.MASTER:
             print("发射子弹", bullet)
 
     # 敌人移动/发送逻辑
@@ -159,7 +168,7 @@ class Bullet:
     y = 0
     width = 40  # 子弹大小
     height = 68
-    speed = 20 / globalvar.body_max  # 移动速度（慢点，慢点好躲 XD）
+    speed = 15 / globalvar.body_max  # 移动速度（慢点，慢点好躲 XD）
     type = None  # 对应的飞船类型
 
     # 构造方法

@@ -3,21 +3,24 @@
 
 from enum import Enum
 
-# 全局工作变量
-
+# 全局设置
 width = 600  # 窗口尺寸
-height = 800
+height = 700
+body_max = 5  # 同屏最大数
+debug = True  # 输出调试信息
+
+# 全局工作变量
+version = "1.0"  # 版本号
+body_max_bak = 0  # 同屏最大数备份
 screen = None  # 窗口主体
 done = False  # 退出标记
-debug = True  # 输出调试信息
 clock = 0  # 循环计数
 master = None  # 主舰船
-body_max = 5  # 同屏最大数
+ui = 'main'  # UI 状态
+source = 0  # 分数
 
 
-# 枚举常量
-
-# 移动方向
+# 移动方向枚举常量
 class Direction(Enum):
     LEFT = 1
     RIGHT = 2
@@ -26,7 +29,7 @@ class Direction(Enum):
     NONE = 5
 
 
-# 飞机类型（数值代表伤害倍数 + 5）
+# 飞机类型枚举常量（数值代表伤害倍数 + 5）
 class FlightType(Enum):
     MASTER = 6
     ENEMY = 7

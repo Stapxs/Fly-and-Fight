@@ -20,13 +20,14 @@ def run():
     # globalvar.clock += 1
     # 主运行流程
     # 每个循环都需要执行的部分
-    controller.Bg().loadBg()  # 刷新背景
+    controller.Display().loadBg()  # 刷新背景
     globalvar.master.display()  # 刷新主飞船（同时也会刷新此飞船所属的子弹）
 
     enemies.create()  # 创建敌人
     for enemy in enemies.enemy_list:  # 刷新敌人（同时也会刷新此飞船所属的子弹）
         enemy.display()
 
+    # pygame.time.wait(10)  # 循环延时
     pygame.display.update()  # 刷新窗口
 
     enemies.collision()  # 死亡判定
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     pygame.display.set_caption('Fly&Fight!')
 
     # 初始化基础
-    controller.Bg().loadBg()  # 初始化背景
+    controller.Display().loadBg()  # 初始化背景
     globalvar.master = articleobj.Flight(globalvar.FlightType.MASTER)  # 创建主飞船
     globalvar.body_max_bak = globalvar.body_max  # 开始暂停
     globalvar.body_max = 0

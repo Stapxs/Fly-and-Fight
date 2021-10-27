@@ -15,7 +15,12 @@ class Flight:
     height = 61
     type = None  # 飞船类型
 
-    speed = 20  # 移送速度
+    hp = 1  # 血量
+    hit = 1  # 伤害
+
+    hp_times = -1  # hp 显示次数计时
+
+    speed = 10  # 移冻速度
     move_state = globalvar.Direction.RIGHT  # 移动状态（仅非 Master 有效）
 
     bullet_list = []  # 子弹列表
@@ -29,12 +34,18 @@ class Flight:
             # 居中底部
             self.x = globalvar.width / 2 - self.width / 2
             self.y = globalvar.height - self.height * 2
+            # 设置参数
+            self.hp = globalvar.max_m_hp
+            self.hit = globalvar.m_hit
         elif flight_type == globalvar.FlightType.ENEMY:  # 敌人
             # 创建敌人飞船图片 1-3 随机（包含透明通道）
             self.mst_img = pygame.image.load('./images/enemy_' + str(random.randint(1, 3)) + '.png').convert_alpha()
             # 设置位置
             self.x = x
             self.y = y
+            # 设置参数
+            self.hp = globalvar.max_n_hp
+            self.hit = globalvar.n_hit
         elif flight_type == globalvar.FlightType.BOSS:  # TODO BOSS
             pass
         elif globalvar.debug:
@@ -49,6 +60,11 @@ class Flight:
         # 显示飞船
         self.move()
         globalvar.screen.blit(self.mst_img, (self.x, self.y))
+        # 显示血量
+        if 0 <= self.hp_times <= 100:
+            self.__showHp()
+        elif self.hp_times > 100:
+            self.hp_times = -1
 
     # 处理移动
     def move(self):
@@ -60,15 +76,15 @@ class Flight:
                 if event.type == pygame.QUIT:
                     globalvar.done = True
                 elif event.type == KEYDOWN:
-                    # 移动
-                    if event.key == K_UP or event.key == K_w:
-                        self.__mvpic(globalvar.Direction.UP, self.speed)
-                    if event.key == K_DOWN or event.key == K_s:
-                        self.__mvpic(globalvar.Direction.DOWN, self.speed)
-                    if event.key == K_LEFT or event.key == K_a:
-                        self.__mvpic(globalvar.Direction.LEFT, self.speed)
-                    if event.key == K_RIGHT or event.key == K_d:
-                        self.__mvpic(globalvar.Direction.RIGHT, self.speed)
+                    # # 移动
+                    # if event.key == K_UP or event.key == K_w:
+                    #     self.__mvpic(globalvar.Direction.UP, self.speed)
+                    # if event.key == K_DOWN or event.key == K_s:
+                    #     self.__mvpic(globalvar.Direction.DOWN, self.speed)
+                    # if event.key == K_LEFT or event.key == K_a:
+                    #     self.__mvpic(globalvar.Direction.LEFT, self.speed)
+                    # if event.key == K_RIGHT or event.key == K_d:
+                    #     self.__mvpic(globalvar.Direction.RIGHT, self.speed)
                     # 发射子弹
                     if event.key == K_SPACE:
                         self.__fire()
@@ -77,6 +93,8 @@ class Flight:
                         # 重置主机位置
                         self.x = globalvar.width / 2 - self.width / 2
                         self.y = globalvar.height - self.height * 2
+                        # 重置血量
+                        globalvar.master.hp = globalvar.max_m_hp
                         # 开始生成
                         globalvar.body_max = globalvar.body_max_bak
                         # 切换 UI
@@ -84,11 +102,41 @@ class Flight:
                     # 退出
                     if event.key == K_q or event.key == K_ESCAPE:
                         globalvar.done = True
+            # 移动
+            keys = pygame.key.get_pressed()  # 获取当前按键状态
+            move_way = keys[pygame.K_RIGHT] - keys[pygame.K_LEFT] or keys[pygame.K_d] - keys[pygame.K_a]
+            if move_way == 1:
+                self.__mvpic(globalvar.Direction.RIGHT, self.speed)
+            elif move_way == -1:
+                self.__mvpic(globalvar.Direction.LEFT, self.speed)
+            move_way = keys[pygame.K_UP] - keys[pygame.K_DOWN] or keys[pygame.K_w] - keys[pygame.K_s]
+            if move_way == 1:
+                self.__mvpic(globalvar.Direction.UP, self.speed)
+            elif move_way == -1:
+                self.__mvpic(globalvar.Direction.DOWN, self.speed)
         elif self.type == globalvar.FlightType.ENEMY:
             info = self.__enemy()
             self.__mvpic(info[0], info[1])
 
     # 私有方法 --------------------------------------------------------------------
+
+    # 显示血量
+    def __showHp(self):
+        fontObj = pygame.font.Font('freesansbold.ttf', 15)  # 初始化字体
+        if self.hp < 0:
+            self.hp = 0
+        if self.type == globalvar.FlightType.MASTER:
+            # 初始化文本
+            textSurfaceObj = fontObj.render(str(self.hp) + " / " + str(globalvar.max_m_hp), True, (255, 255, 255))
+            globalvar.screen.blit(textSurfaceObj,
+                                  (self.x + self.width / 2 - textSurfaceObj.get_rect().width / 2, self.y + 60))
+        if self.type == globalvar.FlightType.ENEMY:
+            # 初始化文本
+            textSurfaceObj = fontObj.render(str(self.hp) + " / " + str(globalvar.max_n_hp), True, (255, 255, 255))
+            globalvar.screen.blit(textSurfaceObj,
+                                  (self.x + self.width / 2 - textSurfaceObj.get_rect().width / 2, self.y + 60))
+        # 计数
+        self.hp_times += 1
 
     # 移动主飞船图片
     def __mvpic(self, where, speed):
@@ -102,22 +150,16 @@ class Flight:
         if where == globalvar.Direction.RIGHT and self.x < globalvar.width - self.width:
             self.x += speed
 
-        if globalvar.debug and where != globalvar.Direction.NONE and self.type == globalvar.FlightType.MASTER:
-            print("移动", where, " -> [", self.x, ",", self.y, "]")
-
     # 发射子弹
     def __fire(self):
         bullet = None
         if self.type == globalvar.FlightType.MASTER:
-            bullet = Bullet(self.type, self.x + 20, self.y - self.height / 2)
+            bullet = Bullet(self.type, self.hit, self.x + 20, self.y - self.height / 2)
         elif self.type == globalvar.FlightType.ENEMY:
-            bullet = Bullet(self.type, self.x + 20, self.y + self.height / 2)
+            bullet = Bullet(self.type, self.hit, self.x + 20, self.y + self.height / 2)
         # 将子弹添加到列表内用于 self.display() 处理显示和移动
         if bullet is not None:
             self.bullet_list.append(bullet)
-
-        if globalvar.debug and self.type == globalvar.FlightType.MASTER:
-            print("发射子弹", bullet)
 
     # 敌人移动/发送逻辑
     def __enemy(self):
@@ -171,8 +213,10 @@ class Bullet:
     speed = 15 / globalvar.body_max  # 移动速度（慢点，慢点好躲 XD）
     type = None  # 对应的飞船类型
 
+    hit = 1  # 子弹的伤害
+
     # 构造方法
-    def __init__(self, f_type, x, y):
+    def __init__(self, f_type, hit, x, y):
         self.type = f_type
         # 创建图片（包含透明通道）
         if f_type == globalvar.FlightType.MASTER:
@@ -186,6 +230,8 @@ class Bullet:
         # 初始化位置
         self.x = x
         self.y = y
+        # 初始化伤害
+        self.hit = hit
 
     # 显示
     def display(self):

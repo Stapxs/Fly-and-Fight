@@ -9,6 +9,13 @@ height = 700
 body_max = 5  # 同屏最大数
 debug = True  # 输出调试信息
 
+# 飞机参数
+max_n_hp = 15  # 敌人血量
+n_hit = 2  # 敌人基础伤害
+
+max_m_hp = 60  # 主机血量
+m_hit = 5  # 主机基础伤害
+
 # 全局工作变量
 version = "1.0"  # 版本号
 body_max_bak = 0  # 同屏最大数备份
@@ -16,7 +23,7 @@ screen = None  # 窗口主体
 done = False  # 退出标记
 clock = 0  # 循环计数
 master = None  # 主舰船
-ui = 'main'  # UI 状态
+ui = 'home'  # UI 状态
 source = 0  # 分数
 
 
@@ -34,3 +41,6 @@ class FlightType(Enum):
     MASTER = 6
     ENEMY = 7
     BOSS = 9  # BOSS 不一定会写
+
+    def __int__(self):
+        return self.value

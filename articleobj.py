@@ -19,8 +19,9 @@ class Flight:
     hit = 1  # 伤害
 
     hp_times = -1  # hp 显示次数计时
+    fight_times = 0  # 子弹发射计数
 
-    speed = 10  # 移冻速度
+    speed = 10  # 移动速度
     move_state = globalvar.Direction.RIGHT  # 移动状态（仅非 Master 有效）
 
     bullet_list = []  # 子弹列表
@@ -85,9 +86,9 @@ class Flight:
                     #     self.__mvpic(globalvar.Direction.LEFT, self.speed)
                     # if event.key == K_RIGHT or event.key == K_d:
                     #     self.__mvpic(globalvar.Direction.RIGHT, self.speed)
-                    # 发射子弹
-                    if event.key == K_SPACE:
-                        self.__fire()
+                    # # 发射子弹
+                    # if event.key == K_SPACE:
+                    #     self.__fire()
                     # 重开
                     if event.key == K_r:
                         # 重置主机位置
@@ -95,6 +96,8 @@ class Flight:
                         self.y = globalvar.height - self.height * 2
                         # 重置血量
                         globalvar.master.hp = globalvar.max_m_hp
+                        # 重置分数
+                        globalvar.source = 0
                         # 开始生成
                         globalvar.body_max = globalvar.body_max_bak
                         # 切换 UI
@@ -114,6 +117,12 @@ class Flight:
                 self.__mvpic(globalvar.Direction.UP, self.speed)
             elif move_way == -1:
                 self.__mvpic(globalvar.Direction.DOWN, self.speed)
+            # 发射
+            if keys[pygame.K_SPACE] and globalvar.body_max > 0:
+                self.fight_times += 1
+                if self.fight_times == 8:
+                    self.fight_times = 0
+                    self.__fire()
         elif self.type == globalvar.FlightType.ENEMY:
             info = self.__enemy()
             self.__mvpic(info[0], info[1])
@@ -122,19 +131,27 @@ class Flight:
 
     # 显示血量
     def __showHp(self):
-        fontObj = pygame.font.Font('freesansbold.ttf', 15)  # 初始化字体
         if self.hp < 0:
             self.hp = 0
-        if self.type == globalvar.FlightType.MASTER:
-            # 初始化文本
-            textSurfaceObj = fontObj.render(str(self.hp) + " / " + str(globalvar.max_m_hp), True, (255, 255, 255))
-            globalvar.screen.blit(textSurfaceObj,
-                                  (self.x + self.width / 2 - textSurfaceObj.get_rect().width / 2, self.y + 60))
+
+        # 显示血量文本
+        # fontObj = pygame.font.Font('freesansbold.ttf', 15)  # 初始化字体
+        # if self.type == globalvar.FlightType.MASTER:
+        #     # 初始化文本
+        #     textSurfaceObj = fontObj.render(str(self.hp) + " / " + str(globalvar.max_m_hp), True, (255, 255, 255))
+        #     globalvar.screen.blit(textSurfaceObj,
+        #                           (self.x + self.width / 2 - textSurfaceObj.get_rect().width / 2, self.y + 60))
+        # if self.type == globalvar.FlightType.ENEMY:
+        #     # 初始化文本
+        #     textSurfaceObj = fontObj.render(str(self.hp) + " / " + str(globalvar.max_n_hp), True, (255, 255, 255))
+        #     globalvar.screen.blit(textSurfaceObj,
+        #                           (self.x + self.width / 2 - textSurfaceObj.get_rect().width / 2, self.y + 60))
+
+        #  主机不显示小血条，大血条由主 UI 维护 -> controller.py
         if self.type == globalvar.FlightType.ENEMY:
-            # 初始化文本
-            textSurfaceObj = fontObj.render(str(self.hp) + " / " + str(globalvar.max_n_hp), True, (255, 255, 255))
-            globalvar.screen.blit(textSurfaceObj,
-                                  (self.x + self.width / 2 - textSurfaceObj.get_rect().width / 2, self.y + 60))
+            pygame.draw.rect(globalvar.screen, (255, 255, 255), (self.x + 5, self.y + 60, 60, 15), 2)  # 血条外框
+            pygame.draw.rect(globalvar.screen, (184, 89, 74),
+                             (self.x + 7, self.y + 62, 60 * self.hp / globalvar.max_n_hp, 11), 0)  # 血条
         # 计数
         self.hp_times += 1
 
@@ -143,7 +160,7 @@ class Flight:
         # 处理方向
         if where == globalvar.Direction.UP and self.y > 0:
             self.y -= speed
-        if where == globalvar.Direction.DOWN and self.y < globalvar.height - self.height:
+        if where == globalvar.Direction.DOWN and self.y < globalvar.height - self.height - 60:
             self.y += speed
         if where == globalvar.Direction.LEFT and self.x > 0:
             self.x -= speed
@@ -253,3 +270,42 @@ class Bullet:
             self.y += self.speed
         elif globalvar.debug:
             print("Bullet > __mvpic > 移动方向无效。")
+
+
+class Item:
+    x = 0  # 物品坐标
+    y = 0
+
+    width = 0  # 物品大小
+    height = 0
+
+    type = None  # 物品类型
+
+    speed = 3  # y 移动速度
+
+    def __init__(self, i_type, width, height):
+        self.type = i_type
+        self.width = width
+        self.height = height
+        # 创建图片（包含透明通道）
+        if i_type == globalvar.ItemType.HEALTH:
+            self.bul_img = pygame.image.load('./images/hp.png').convert_alpha()
+        # 随机 x 轴
+        self.x = random.randint(self.height / 2, globalvar.width - self.width / 2)
+
+    # 显示
+    def display(self):
+        self.move()
+        globalvar.screen.blit(self.bul_img, (self.x, self.y))
+
+    # 移动
+    def move(self):
+        self.y += self.speed
+
+    # 操作
+    def operate(self):
+        if self.type == globalvar.ItemType.HEALTH:
+            globalvar.master.hp += globalvar.max_m_hp / 3
+            if globalvar.master.hp > globalvar.max_m_hp:
+                globalvar.master.hp = globalvar.max_m_hp
+

@@ -7,27 +7,26 @@ import articleobj
 import controller
 import globalvar
 
-bgImg = './images/bg.jpg'
-
 enemies = controller.EnemyCreator()
+items = controller.ItemCreator()
+uic = controller.Display()
 
 
 def run():
-    # TODO 多倍数循环
-    # clock 参数为 循环计数
-    # 这玩意是打算用来处理一些需要 N 个循环执行一次的操作
-    # * 不一定会写
-    # globalvar.clock += 1
     # 主运行流程
-    # 每个循环都需要执行的部分
-    controller.Display().loadBg()  # 刷新背景
+    uic.displayUI()  # 刷新界面
     globalvar.master.display()  # 刷新主飞船（同时也会刷新此飞船所属的子弹）
 
     enemies.create()  # 创建敌人
     for enemy in enemies.enemy_list:  # 刷新敌人（同时也会刷新此飞船所属的子弹）
         enemy.display()
 
-    # pygame.time.wait(10)  # 循环延时
+    items.collision()  # 物品碰撞判定
+    items.create_tools()  # 创建道具物品
+    for item in items.tool_item:  # 刷新道具物品（包含移动）
+        item.display()
+
+    pygame.time.wait(10)  # 循环延时
     pygame.display.update()  # 刷新窗口
 
     enemies.collision()  # 死亡判定
@@ -41,7 +40,6 @@ if __name__ == "__main__":
     pygame.display.set_caption('Fly&Fight!')
 
     # 初始化基础
-    controller.Display().loadBg()  # 初始化背景
     globalvar.master = articleobj.Flight(globalvar.FlightType.MASTER)  # 创建主飞船
     globalvar.body_max_bak = globalvar.body_max  # 开始暂停
     globalvar.body_max = 0

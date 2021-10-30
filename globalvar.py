@@ -17,7 +17,7 @@ max_m_hp = 60  # 主机血量
 m_hit = 5  # 主机基础伤害
 
 # 全局工作变量
-version = "1.3"  # 版本号
+version = "1.4"  # 版本号
 body_max_bak = 0  # 同屏最大数备份
 screen = None  # 窗口主体
 done = False  # 退出标记
